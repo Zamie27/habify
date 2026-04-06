@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import InputError from '@/components/InputError.vue';
-import PasswordInput from '@/components/PasswordInput.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
 import { update } from '@/routes/password';
+import { useTheme } from 'vuetify';
+
+const theme = useTheme();
 
 defineOptions({
     layout: {
@@ -22,66 +19,78 @@ const props = defineProps<{
 }>();
 
 const inputEmail = ref(props.email);
+
+const form = useForm({
+    token: props.token,
+    email: props.email,
+    password: '',
+    password_confirmation: '',
+});
+
+const submit = () => {
+    form.post(update.form().action, {
+        onFinish: () => form.reset('password', 'password_confirmation'),
+    });
+};
 </script>
 
 <template>
-    <Head title="Reset password" />
+    <Head title="Reset Password" />
 
-    <Form
-        v-bind="update.form()"
-        :transform="(data) => ({ ...data, token, email })"
-        :reset-on-success="['password', 'password_confirmation']"
-        v-slot="{ errors, processing }"
-    >
-        <div class="grid gap-6">
-            <div class="grid gap-2">
-                <Label for="email">Email</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    name="email"
-                    autocomplete="email"
-                    v-model="inputEmail"
-                    class="mt-1 block w-full"
-                    readonly
-                />
-                <InputError :message="errors.email" class="mt-2" />
-            </div>
+    <v-form @submit.prevent="submit" class="d-flex flex-column gap-3">
+        <v-text-field
+            v-model="inputEmail"
+            label="Email"
+            type="email"
+            variant="outlined"
+            color="primary"
+            density="comfortable"
+            rounded="lg"
+            readonly
+            disabled
+            :error-messages="form.errors.email"
+            prepend-inner-icon="mdi-email-outline"
+        />
 
-            <div class="grid gap-2">
-                <Label for="password">Password</Label>
-                <PasswordInput
-                    id="password"
-                    name="password"
-                    autocomplete="new-password"
-                    class="mt-1 block w-full"
-                    autofocus
-                    placeholder="Password"
-                />
-                <InputError :message="errors.password" />
-            </div>
+        <v-text-field
+            v-model="form.password"
+            label="Password Baru"
+            type="password"
+            variant="outlined"
+            color="primary"
+            density="comfortable"
+            rounded="lg"
+            :error-messages="form.errors.password"
+            prepend-inner-icon="mdi-lock-outline"
+            required
+            autofocus
+        />
 
-            <div class="grid gap-2">
-                <Label for="password_confirmation"> Confirm password </Label>
-                <PasswordInput
-                    id="password_confirmation"
-                    name="password_confirmation"
-                    autocomplete="new-password"
-                    class="mt-1 block w-full"
-                    placeholder="Confirm password"
-                />
-                <InputError :message="errors.password_confirmation" />
-            </div>
+        <v-text-field
+            v-model="form.password_confirmation"
+            label="Konfirmasi Password Baru"
+            type="password"
+            variant="outlined"
+            color="primary"
+            density="comfortable"
+            rounded="lg"
+            :error-messages="form.errors.password_confirmation"
+            prepend-inner-icon="mdi-lock-check-outline"
+            required
+        />
 
-            <Button
-                type="submit"
-                class="mt-4 w-full"
-                :disabled="processing"
-                data-test="reset-password-button"
-            >
-                <Spinner v-if="processing" />
-                Reset password
-            </Button>
-        </div>
-    </Form>
+        <v-btn
+            type="submit"
+            color="primary"
+            size="x-large"
+            block
+            rounded="pill"
+            class="text-none font-weight-black py-4 mt-4"
+            elevation="4"
+            :loading="form.processing"
+            :disabled="form.processing"
+        >
+            Reset Password
+        </v-btn>
+    </v-form>
 </template>

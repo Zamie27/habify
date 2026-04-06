@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { home } from '@/routes';
+import { useTheme } from 'vuetify';
+
+const theme = useTheme();
 
 defineProps<{
     title?: string;
@@ -10,34 +12,79 @@ defineProps<{
 </script>
 
 <template>
-    <div
-        class="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10"
-    >
-        <div class="w-full max-w-sm">
-            <div class="flex flex-col gap-8">
-                <div class="flex flex-col items-center gap-4">
-                    <Link
-                        :href="home()"
-                        class="flex flex-col items-center gap-2 font-medium"
-                    >
-                        <div
-                            class="mb-1 flex h-9 w-9 items-center justify-center rounded-md"
-                        >
-                            <AppLogoIcon
-                                class="size-9 fill-current text-[var(--foreground)] dark:text-white"
-                            />
-                        </div>
-                        <span class="sr-only">{{ title }}</span>
-                    </Link>
-                    <div class="space-y-2 text-center">
-                        <h1 class="text-xl font-medium">{{ title }}</h1>
-                        <p class="text-center text-sm text-muted-foreground">
-                            {{ description }}
-                        </p>
-                    </div>
+    <v-app :theme="theme.global.name.value">
+        <v-main class="auth-page d-flex align-center justify-center">
+            <!-- Background Layering -->
+            <div class="absolute inset-0 z-0">
+                <div 
+                    class="absolute inset-0 bg-cover bg-center transition-opacity duration-500"
+                    :style="{ backgroundImage: `url('/image/bghero-light.jpg')`, opacity: theme.global.current.value.dark ? 0 : 1 }"
+                >
+                    <div class="absolute inset-0 bg-white/40"></div>
                 </div>
-                <slot />
+                <div 
+                    class="absolute inset-0 bg-cover bg-center transition-opacity duration-500"
+                    :style="{ backgroundImage: `url('/image/bghero-dark.jpg')`, opacity: theme.global.current.value.dark ? 1 : 0, filter: 'brightness(60%)' }"
+                >
+                    <div class="absolute inset-0 bg-slate-900/60"></div>
+                </div>
             </div>
-        </div>
-    </div>
+
+            <v-container class="relative z-10 pa-4" style="max-width: 520px;">
+                <v-card 
+                    class="auth-card pa-8 pa-md-10" 
+                    rounded="xl" 
+                    elevation="24"
+                >
+                    <div class="text-center mb-8">
+                        <Link :href="home().url" class="text-decoration-none">
+                            <h2 class="text-h4 font-weight-black ls-tight mb-2" :class="theme.global.current.value.dark ? 'text-white' : 'text-neutral'">
+                                Habify
+                            </h2>
+                        </Link>
+                        <p class="text-body-1 opacity-70" v-if="description">{{ description }}</p>
+                    </div>
+
+                    <slot />
+                </v-card>
+                
+                <div class="text-center mt-8 px-4 opacity-50">
+                    <p class="text-caption text-grey">
+                        &copy; 2026 Habify by Kuukok. Semua hak dilindungi.
+                    </p>
+                </div>
+            </v-container>
+        </v-main>
+    </v-app>
 </template>
+
+<style scoped>
+.auth-page {
+    min-height: 100vh;
+    position: relative;
+}
+
+.auth-card {
+    backdrop-filter: blur(16px);
+    background-color: rgba(var(--v-theme-surface), 0.8) !important;
+    border: 1px solid rgba(var(--v-theme-primary), 0.1) !important;
+}
+
+.absolute { position: absolute; }
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.z-0 { z-index: 0; }
+.z-10 { z-index: 10; }
+.relative { position: relative; }
+.bg-cover { background-size: cover; }
+.bg-center { background-position: center; }
+.transition-opacity { transition: opacity 0.5s ease-in-out; }
+.ls-tight { letter-spacing: -0.02em !important; }
+
+.v-theme--light .auth-card {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.v-theme--dark .auth-card {
+    background-color: rgba(30, 41, 59, 0.7) !important;
+}
+</style>

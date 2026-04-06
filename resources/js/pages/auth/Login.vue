@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
-import InputError from '@/components/InputError.vue';
-import PasswordInput from '@/components/PasswordInput.vue';
-import TextLink from '@/components/TextLink.vue';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+import { useTheme } from 'vuetify';
+
+const theme = useTheme();
 
 defineOptions({
     layout: {
@@ -24,88 +19,106 @@ defineProps<{
     canResetPassword: boolean;
     canRegister: boolean;
 }>();
+
+const form = useForm({
+    email: '',
+    password: '',
+    remember: false,
+});
+
+const submit = () => {
+    form.post(store.form().action, {
+        onFinish: () => form.reset('password'),
+    });
+};
 </script>
 
 <template>
     <Head title="Log in" />
 
-    <div
+    <v-alert
         v-if="status"
-        class="mb-4 text-center text-sm font-medium text-green-600"
+        type="success"
+        variant="tonal"
+        class="mb-6 rounded-lg text-body-2"
     >
         {{ status }}
-    </div>
+    </v-alert>
 
-    <Form
-        v-bind="store.form()"
-        :reset-on-success="['password']"
-        v-slot="{ errors, processing }"
-        class="flex flex-col gap-6"
-    >
-        <div class="grid gap-6">
-            <div class="grid gap-2">
-                <Label for="email">Email address</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    name="email"
-                    required
-                    autofocus
-                    :tabindex="1"
-                    autocomplete="email"
-                    placeholder="email@example.com"
-                />
-                <InputError :message="errors.email" />
-            </div>
-
-            <div class="grid gap-2">
-                <div class="flex items-center justify-between">
-                    <Label for="password">Password</Label>
-                    <TextLink
-                        v-if="canResetPassword"
-                        :href="request()"
-                        class="text-sm"
-                        :tabindex="5"
-                    >
-                        Forgot password?
-                    </TextLink>
-                </div>
-                <PasswordInput
-                    id="password"
-                    name="password"
-                    required
-                    :tabindex="2"
-                    autocomplete="current-password"
-                    placeholder="Password"
-                />
-                <InputError :message="errors.password" />
-            </div>
-
-            <div class="flex items-center justify-between">
-                <Label for="remember" class="flex items-center space-x-3">
-                    <Checkbox id="remember" name="remember" :tabindex="3" />
-                    <span>Remember me</span>
-                </Label>
-            </div>
-
-            <Button
-                type="submit"
-                class="mt-4 w-full"
-                :tabindex="4"
-                :disabled="processing"
-                data-test="login-button"
-            >
-                <Spinner v-if="processing" />
-                Log in
-            </Button>
+    <v-form @submit.prevent="submit" class="d-flex flex-column gap-4">
+        <div class="mb-4">
+            <v-text-field
+                v-model="form.email"
+                label="Email address"
+                type="email"
+                placeholder="email@example.com"
+                variant="outlined"
+                color="primary"
+                density="comfortable"
+                rounded="lg"
+                persistent-hint
+                :error-messages="form.errors.email"
+                prepend-inner-icon="mdi-email-outline"
+                required
+                autofocus
+            />
         </div>
 
-        <div
-            class="text-center text-sm text-muted-foreground"
-            v-if="canRegister"
+        <div class="mb-2">
+            <div class="d-flex justify-space-between align-center mb-1">
+                <label class="text-caption font-weight-bold opacity-70">Password</label>
+                <Link 
+                    v-if="canResetPassword" 
+                    :href="request().url" 
+                    class="text-caption text-primary text-decoration-none font-weight-bold"
+                >
+                    Lupa Password?
+                </Link>
+            </div>
+            <v-text-field
+                v-model="form.password"
+                label="Password"
+                type="password"
+                variant="outlined"
+                color="primary"
+                density="comfortable"
+                rounded="lg"
+                :error-messages="form.errors.password"
+                prepend-inner-icon="mdi-lock-outline"
+                required
+            />
+        </div>
+
+        <div class="mb-6">
+            <v-checkbox
+                v-model="form.remember"
+                label="Ingat saya"
+                color="primary"
+                hide-details
+                density="compact"
+                class="mt-n2"
+            />
+        </div>
+
+        <v-btn
+            type="submit"
+            color="primary"
+            size="x-large"
+            block
+            rounded="pill"
+            class="text-none font-weight-black py-4 mb-6"
+            elevation="4"
+            :loading="form.processing"
+            :disabled="form.processing"
         >
-            Don't have an account?
-            <TextLink :href="register()" :tabindex="5">Sign up</TextLink>
+            Masuk Sekarang
+        </v-btn>
+
+        <div v-if="canRegister" class="text-center">
+            <span class="text-body-2 opacity-70">Belum punya akun? </span>
+            <Link :href="register().url" class="text-body-2 text-primary text-decoration-none font-weight-bold">
+                Daftar Gratis
+            </Link>
         </div>
-    </Form>
+    </v-form>
 </template>

@@ -1,32 +1,25 @@
 <script setup lang="ts">
-import { Form, Head, setLayoutProps } from '@inertiajs/vue3';
+import { Head, useForm, setLayoutProps } from '@inertiajs/vue3';
 import { computed, ref, watchEffect } from 'vue';
-import InputError from '@/components/InputError.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot,
-} from '@/components/ui/input-otp';
 import { store } from '@/routes/two-factor/login';
 import type { TwoFactorConfigContent } from '@/types';
+import { useTheme } from 'vuetify';
+
+const theme = useTheme();
 
 const authConfigContent = computed<TwoFactorConfigContent>(() => {
     if (showRecoveryInput.value) {
         return {
             title: 'Recovery code',
-            description:
-                'Please confirm access to your account by entering one of your emergency recovery codes.',
-            buttonText: 'login using an authentication code',
+            description: 'Konfirmasi akses ke akun Anda dengan memasukkan salah satu kode pemulihan darurat Anda.',
+            buttonText: 'Gunakan kode autentikasi',
         };
     }
 
     return {
         title: 'Authentication code',
-        description:
-            'Enter the authentication code provided by your authenticator application.',
-        buttonText: 'login using a recovery code',
+        description: 'Masukkan kode autentikasi yang diberikan oleh aplikasi autentikator Anda.',
+        buttonText: 'Gunakan kode pemulihan',
     };
 });
 
@@ -39,96 +32,110 @@ watchEffect(() => {
 
 const showRecoveryInput = ref<boolean>(false);
 
-const toggleRecoveryMode = (clearErrors: () => void): void => {
+const form = useForm({
+    code: '',
+    recovery_code: '',
+});
+
+const toggleRecoveryMode = (): void => {
     showRecoveryInput.value = !showRecoveryInput.value;
-    clearErrors();
-    code.value = '';
+    form.clearErrors();
+    form.code = '';
+    form.recovery_code = '';
 };
 
-const code = ref<string>('');
+const submit = () => {
+    form.post(store.form().action, {
+        onFinish: () => {
+            form.code = '';
+            form.recovery_code = '';
+        },
+    });
+};
 </script>
 
 <template>
-    <Head title="Two-factor authentication" />
+    <Head title="Two-factor Authentication" />
 
-    <div class="space-y-6">
+    <v-form @submit.prevent="submit" class="d-flex flex-column align-center gap-6">
         <template v-if="!showRecoveryInput">
-            <Form
-                v-bind="store.form()"
-                class="space-y-4"
-                reset-on-error
-                @error="code = ''"
-                #default="{ errors, processing, clearErrors }"
+            <v-otp-input
+                v-model="form.code"
+                type="number"
+                length="6"
+                color="primary"
+                :disabled="form.processing"
+                autofocus
+            />
+            
+            <v-alert
+                v-if="form.errors.code"
+                type="error"
+                variant="tonal"
+                class="w-100 text-caption py-2"
             >
-                <input type="hidden" name="code" :value="code" />
-                <div
-                    class="flex flex-col items-center justify-center space-y-3 text-center"
-                >
-                    <div class="flex w-full items-center justify-center">
-                        <InputOTP
-                            id="otp"
-                            v-model="code"
-                            :maxlength="6"
-                            :disabled="processing"
-                            autofocus
-                        >
-                            <InputOTPGroup>
-                                <InputOTPSlot
-                                    v-for="index in 6"
-                                    :key="index"
-                                    :index="index - 1"
-                                />
-                            </InputOTPGroup>
-                        </InputOTP>
-                    </div>
-                    <InputError :message="errors.code" />
-                </div>
-                <Button type="submit" class="w-full" :disabled="processing"
-                    >Continue</Button
-                >
-                <div class="text-center text-sm text-muted-foreground">
-                    <span>or you can </span>
-                    <button
-                        type="button"
-                        class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
-                        @click="() => toggleRecoveryMode(clearErrors)"
-                    >
-                        {{ authConfigContent.buttonText }}
-                    </button>
-                </div>
-            </Form>
+                {{ form.errors.code }}
+            </v-alert>
+
+            <v-btn
+                type="submit"
+                color="primary"
+                size="x-large"
+                block
+                rounded="pill"
+                class="text-none font-weight-black py-4 mt-2"
+                elevation="4"
+                :loading="form.processing"
+                :disabled="form.processing || form.code.length < 6"
+            >
+                Lanjutkan
+            </v-btn>
         </template>
 
         <template v-else>
-            <Form
-                v-bind="store.form()"
-                class="space-y-4"
-                reset-on-error
-                #default="{ errors, processing, clearErrors }"
-            >
-                <Input
-                    name="recovery_code"
-                    type="text"
-                    placeholder="Enter recovery code"
-                    :autofocus="showRecoveryInput"
+            <div class="w-100 d-flex flex-column gap-4">
+                <v-text-field
+                    v-model="form.recovery_code"
+                    label="Kode Pemulihan"
+                    placeholder="Masukkan kode pemulihan"
+                    variant="outlined"
+                    color="primary"
+                    density="comfortable"
+                    rounded="lg"
+                    :error-messages="form.errors.recovery_code"
+                    prepend-inner-icon="mdi-shield-key-outline"
                     required
+                    autofocus
                 />
-                <InputError :message="errors.recovery_code" />
-                <Button type="submit" class="w-full" :disabled="processing"
-                    >Continue</Button
-                >
 
-                <div class="text-center text-sm text-muted-foreground">
-                    <span>or you can </span>
-                    <button
-                        type="button"
-                        class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
-                        @click="() => toggleRecoveryMode(clearErrors)"
-                    >
-                        {{ authConfigContent.buttonText }}
-                    </button>
-                </div>
-            </Form>
+                <v-btn
+                    type="submit"
+                    color="primary"
+                    size="x-large"
+                    block
+                    rounded="pill"
+                    class="text-none font-weight-black py-4 mt-2"
+                    elevation="4"
+                    :loading="form.processing"
+                    :disabled="form.processing"
+                >
+                    Lanjutkan
+                </v-btn>
+            </div>
         </template>
-    </div>
+
+        <v-btn
+            variant="text"
+            block
+            rounded="pill"
+            class="text-none font-weight-bold opacity-70"
+            @click="toggleRecoveryMode"
+        >
+            {{ authConfigContent.buttonText }}
+        </v-btn>
+    </v-form>
 </template>
+
+<style scoped>
+.w-100 { width: 100%; }
+</style>

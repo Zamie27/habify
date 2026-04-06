@@ -1,0 +1,1 @@
+import{F as e,Nt as t,Pt as n}from"./wayfinder-CebMG86p.js";import{bt as r,wt as i}from"./VBtn-DywuDLYT.js";function a(a,o=`div`,s){return r()({name:s??n(t(a.replace(/__/g,`-`))),props:{tag:{type:String,default:o},...i()},setup(t,{slots:n}){return()=>e(t.tag,{class:[a,t.class],style:t.style},n.default?.())}})}export{a as t};

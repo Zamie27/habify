@@ -3,6 +3,10 @@ import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { createApp, h, type DefineComponent } from 'vue';
+import VueApexCharts from 'vue3-apexcharts';
+import pinia from './plugins/pinia';
+import vuetify from './plugins/vuetify';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -23,6 +27,14 @@ createInertiaApp({
     },
     progress: {
         color: '#4B5563',
+    },
+    setup({ el, App, props, plugin }) {
+        createApp({ render: () => h(App, props) })
+            .use(plugin)
+            .use(vuetify)
+            .use(pinia)
+            .use(VueApexCharts)
+            .mount(el);
     },
 });
 
