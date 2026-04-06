@@ -44,7 +44,7 @@ services:
       MYSQL_PASSWORD: habify_password
       MYSQL_ROOT_PASSWORD: root_password_habify
     ports:
-      - "3318:3316"
+      - "3308:3306"
     volumes:
       - habify-db-data:/var/lib/mysql:Z
     networks:
